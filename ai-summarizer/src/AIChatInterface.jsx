@@ -7,6 +7,7 @@ const AIChatInterface = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [currentModel, setCurrentModel] = useState('gpt-4o-mini');
   const [showModelSelect, setShowModelSelect] = useState(false);
+  const [visible, setVisible] = useState(false);
   const messagesEndRef = useRef(null);
 
   const models = ['gpt-4o-mini', 'gpt-4', 'gpt-3.5-turbo'];
@@ -15,18 +16,18 @@ const AIChatInterface = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Listen for incoming summary or error from background/popup
   useEffect(() => {
     const handler = (msg) => {
       if (msg.type === 'showSummary') {
-        // Start a new chat with the summary as the first AI message
         setMessages([{ id: Date.now(), type: 'ai', content: msg.summary }]);
+        setVisible(true);
       }
       if (msg.type === 'showError') {
         setMessages(prev => [
           ...prev,
           { id: Date.now(), type: 'ai', content: `Error: ${msg.error}` }
         ]);
+        setVisible(true);
       }
     };
     chrome.runtime.onMessage.addListener(handler);
@@ -103,19 +104,28 @@ const AIChatInterface = () => {
     }
   };
 
+  if (!visible) return null;
+
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
+    <div className="fixed top-4 right-4 w-[360px] max-h-[500px] max-w-[95vw] z-[9999] shadow-2xl rounded-2xl overflow-hidden bg-neutral-950 text-white flex flex-col">
       {/* Header */}
-      <div className="px-6 py-3 relative">
+      <div className="px-4 py-3 relative flex justify-between items-center bg-black">
         <button
           onClick={() => setShowModelSelect(!showModelSelect)}
-          className="text-lg font-medium text-gray-300 hover:text-white transition-colors"
+          className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
         >
           {currentModel}
         </button>
 
+        <button
+          onClick={() => setVisible(false)}
+          className="text-gray-400 hover:text-white text-xl font-bold"
+        >
+          ✕
+        </button>
+
         {showModelSelect && (
-          <div className="absolute top-12 left-6 bg-neutral-900 rounded-2xl shadow-lg z-10 py-2">
+          <div className="absolute top-12 left-4 bg-neutral-900 rounded-2xl shadow-lg z-10 py-2">
             {models.map(model => (
               <button
                 key={model}
@@ -133,7 +143,7 @@ const AIChatInterface = () => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-8 space-y-8">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 max-h-[300px]">
         {messages.map(message => (
           <div
             key={message.id}
@@ -142,9 +152,9 @@ const AIChatInterface = () => {
             <div
               className={`${
                 message.type === 'user'
-                  ? 'bg-neutral-900 text-white rounded-2xl px-4 py-3 max-w-md'
-                  : 'bg-white text-black rounded-2xl px-4 py-3 max-w-4xl'
-              }`}
+                  ? 'bg-neutral-900 text-white'
+                  : 'bg-white text-black'
+              } rounded-2xl px-4 py-3 max-w-[80%]`}
             >
               <div className="whitespace-pre-wrap leading-relaxed">
                 {message.content}
@@ -165,15 +175,15 @@ const AIChatInterface = () => {
       </div>
 
       {/* Input */}
-      <div className="bg-neutral-900 rounded-t-3xl px-4 py-3">
+      <div className="bg-neutral-900 px-4 py-3">
         <div className="flex items-center space-x-3">
           <div className="flex-1 relative">
             <textarea
               value={inputMessage}
               onChange={e => setInputMessage(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="Type a message..."
-              className="w-full bg-neutral-900 rounded-2xl px-4 py-2 text-white placeholder-neutral-400 resize-none focus:outline-none transition-all duration-200 text-base leading-6"
+              placeholder=""
+              className="w-full bg-neutral-900 rounded-2xl px-4 py-2 text-white placeholder-neutral-400 resize-none focus:outline-none transition-all duration-200 text-base leading-6 border border-neutral-700"
               rows="1"
               style={{ minHeight: '40px', maxHeight: '200px' }}
               onInput={e => {
