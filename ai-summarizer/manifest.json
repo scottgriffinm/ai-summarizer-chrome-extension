@@ -1,17 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Summarize with AI",
-  "version": "1.1",
-  "description": "Highlight text or summarize entire webpages using OpenAI.",
-  "permissions": [
-    "contextMenus",
-    "storage",
-    "activeTab",
-    "scripting"
-  ],
-  "host_permissions": [
-    "https://api.openai.com/*"
-  ],
+  "version": "0.0.2",
+  "description": "Summarize pages or selected text using LLMs.",
+  "permissions": ["contextMenus", "storage", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>", "https://api.openai.com/*"],
   "background": {
     "service_worker": "background.js"
   },
@@ -26,7 +19,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["dist/content.bundle.js"]
     }
   ],
   "icons": {

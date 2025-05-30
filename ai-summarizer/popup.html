@@ -3,38 +3,10 @@
 <head>
   <meta charset="utf-8">
   <title>Summarize with AI</title>
-  <style>
-    body { font-family: sans-serif; width: 300px; margin: 10px; }
-    label { display: block; margin-top: 10px; font-weight: bold; }
-    input, select, button {
-      width: 100%; padding: 6px; margin-top: 4px;
-      box-sizing: border-box;
-    }
-    #output {
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 8px;
-      margin-top: 10px;
-      background: #fafafa;
-      white-space: pre-wrap;
-    }
-  </style>
+  <link rel="stylesheet" href="dist/popup.bundle.css" />
 </head>
 <body>
-  <label for="apiKey">OpenAI API Key:</label>
-  <input type="password" id="apiKey" placeholder="sk-..." required>
-
-  <label for="model">Model:</label>
-  <select id="model">
-    <option value="gpt-4o-mini">gpt-4o-mini</option>
-    <option value="gpt-4">gpt-4</option>
-    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-  </select>
-
-  <button id="summarizePage">Summarize This Page</button>
-
-  <script src="popup.js"></script>
+  <div id="popup-root"></div>
+  <script src="dist/popup.bundle.js"></script>
 </body>
 </html>

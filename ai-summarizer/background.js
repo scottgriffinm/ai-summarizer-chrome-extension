@@ -1,5 +1,3 @@
-// background.js
-
 // 1) Create the "Summarize with AI" context‐menu on install
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -15,43 +13,28 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   // 2) Get the selected text
   const text = info.selectionText?.trim();
   if (!text) {
-    chrome.tabs.sendMessage(tab.id, {
+    safeSendMessage(tab.id, {
       type: "showError",
       error: "No text selected to summarize."
     });
     return;
   }
 
-  // 3) Load your stored API key & model
+  // 3) Load stored API key & model
   const { apiKey, model } = await chrome.storage.local.get({
     apiKey: "",
     model: "gpt-4o-mini"
   });
 
   if (!apiKey) {
-    chrome.tabs.sendMessage(tab.id, {
+    safeSendMessage(tab.id, {
       type: "showError",
       error: "No OpenAI API key set. Click the extension icon to configure it."
     });
     return;
   }
 
-  // 4) Dynamically inject content.js to ensure the page can receive our message
-  try {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["content.js"]
-    });
-  } catch (injectErr) {
-    console.error("Failed to inject content script:", injectErr);
-    chrome.tabs.sendMessage(tab.id, {
-      type: "showError",
-      error: "Could not inject content script."
-    });
-    return;
-  }
-
-  // 5) Call OpenAI with the selected text
+  // 4) Call OpenAI with the selected text
   try {
     const resp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -78,17 +61,36 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const data = await resp.json();
     const summary = data.choices?.[0]?.message?.content?.trim() || "No summary returned.";
 
-    // 6) Send the summary back into the page
-    chrome.tabs.sendMessage(tab.id, {
+    // 5) Safely inject content.js and send summary
+    safeSendMessage(tab.id, {
       type: "showSummary",
       summary
     });
 
   } catch (err) {
     console.error("OpenAI error:", err);
-    chrome.tabs.sendMessage(tab.id, {
+    safeSendMessage(tab.id, {
       type: "showError",
       error: err.message
     });
   }
 });
+
+// Helper: Try to send a message. If it fails, inject content script and retry.
+function safeSendMessage(tabId, message) {
+  chrome.tabs.sendMessage(tabId, message, async (response) => {
+    if (chrome.runtime.lastError) {
+      // Likely no content script loaded yet – inject it
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId },
+          files: ["dist/content.bundle.js"]
+        });
+        // Retry sending the message after injection
+        chrome.tabs.sendMessage(tabId, message);
+      } catch (e) {
+        console.error("Injection failed:", e);
+      }
+    }
+  });
+}
