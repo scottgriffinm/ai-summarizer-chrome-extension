@@ -1,95 +1,44 @@
-// 1) Create the "Summarize with AI" context‐menu on install
+// ai-summarizer/background.js
+
+// Create context menu on install
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
-    id: "aiSummarize",
-    title: "Summarize with AI",
-    contexts: ["selection"]
+    id: 'aiSummarizeSelection',
+    title: 'Summarize',
+    contexts: ['selection']
   });
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== "aiSummarize") return;
+  if (info.menuItemId !== 'aiSummarizeSelection') return;
 
-  // 2) Get the selected text
   const text = info.selectionText?.trim();
   if (!text) {
-    safeSendMessage(tab.id, {
-      type: "showError",
-      error: "No text selected to summarize."
-    });
+    sendToContent(tab.id, { type: 'error', error: 'No text selected to summarize.' });
     return;
   }
 
-  // 3) Load stored API key & model
-  const { apiKey, model } = await chrome.storage.local.get({
-    apiKey: "",
-    model: "gpt-4o-mini"
-  });
-
-  if (!apiKey) {
-    safeSendMessage(tab.id, {
-      type: "showError",
-      error: "No OpenAI API key set. Click the extension icon to configure it."
-    });
-    return;
-  }
-
-  // 4) Call OpenAI with the selected text
   try {
-    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: "You are a helpful assistant." },
-          { role: "user", content: "Summarize the following text:\n\n" + text }
-        ],
-        max_tokens: 200,
-        temperature: 0.5
-      })
-    });
-
-    if (!resp.ok) {
-      const errJson = await resp.json().catch(() => ({}));
-      throw new Error(errJson.error?.message || `API error ${resp.status}`);
-    }
-
-    const data = await resp.json();
-    const summary = data.choices?.[0]?.message?.content?.trim() || "No summary returned.";
-
-    // 5) Safely inject content.js and send summary
-    safeSendMessage(tab.id, {
-      type: "showSummary",
-      summary
-    });
-
+    // Send to content script
+    sendToContent(tab.id, { type: 'summarize', message: `Summarize the following text:\n\n${text}` });
   } catch (err) {
-    console.error("OpenAI error:", err);
-    safeSendMessage(tab.id, {
-      type: "showError",
-      error: err.message
-    });
+    console.error('OpenAI error:', err);
+    sendToContent(tab.id, { type: 'error', error: err.message });
   }
 });
 
-// Helper: Try to send a message. If it fails, inject content script and retry.
-function safeSendMessage(tabId, message) {
-  chrome.tabs.sendMessage(tabId, message, async (response) => {
+// Always try to send to content; if not injected yet, inject and retry.
+async function sendToContent(tabId, message) {
+  chrome.tabs.sendMessage(tabId, message, async () => {
     if (chrome.runtime.lastError) {
-      // Likely no content script loaded yet – inject it
       try {
         await chrome.scripting.executeScript({
           target: { tabId },
-          files: ["dist/content.bundle.js"]
+          files: ['dist/content.bundle.js']
         });
-        // Retry sending the message after injection
         chrome.tabs.sendMessage(tabId, message);
       } catch (e) {
-        console.error("Injection failed:", e);
+        console.error('Injection failed:', e);
       }
     }
   });
