@@ -6,13 +6,24 @@ export default function PopupApp() {
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [error, setError] = useState('');
+  const [enableShortcut, setEnableShortcut] = useState(false);
 
   useEffect(() => {
     chrome.storage.local.get(['apiKey', 'model'], (data) => {
       if (data.apiKey) setApiKey(data.apiKey);
       if (data.model) setModel(data.model);
+      if (typeof data.enableShortcut === 'boolean') {
+        setEnableShortcut(data.enableShortcut);
+      }
     });
   }, []);
+
+  // Handler for toggling the shortcut on/off
+  const handleToggleShortcut = (e) => {
+    const enabled = e.target.checked;
+    setEnableShortcut(enabled);
+    chrome.storage.local.set({ enableShortcut: enabled });
+  };
 
   const handleSummarize = async () => {
     if (!apiKey.trim()) {
@@ -62,6 +73,21 @@ export default function PopupApp() {
           <option key={m} value={m}>{m}</option>
         ))}
       </select>
+
+
+      {/* ───── New toggle for enabling/disabling the keyboard shortcut ───── */}
+      <div className="flex items-center mb-4">
+        <input
+          id="enable-shortcut"
+          type="checkbox"
+          checked={enableShortcut}
+          onChange={handleToggleShortcut}
+          className="mr-2 h-4 w-4"
+        />
+        <label htmlFor="enable-shortcut" className="text-sm">
+          Enable shortcut (⌘ + ⇧ + S / Ctrl + ⇧ + S)
+        </label>
+      </div>
 
       <button
         onClick={handleSummarize}

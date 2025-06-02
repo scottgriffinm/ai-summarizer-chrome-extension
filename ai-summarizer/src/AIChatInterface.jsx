@@ -95,8 +95,22 @@ const AIChatInterface = () => {
   useEffect(() => {
     const listener = (msg) => {
       if (msg.type === 'summarize') {
+        // From popup → Summarize a URL or pre‐crafted prompt
         handleSummarizeMessage(msg.message);
         setVisible(true);
+
+      } else if (msg.type === 'shortcutSummarize') {
+        // User pressed ⌘+⇧+S or Ctrl+⇧+S
+        // First, see if there is any selected text on the page:
+        const selection = window.getSelection()?.toString()?.trim();
+        if (selection) {
+          handleSummarizeMessage(`Summarize the following text:\n\n${selection}`);
+        } else {
+          // No selection → summarize the whole page
+          handleSummarizeMessage(`Summarize the following web page:\n\n${window.location.href}`);
+        }
+        setVisible(true);
+
       } else if (msg.type === 'error') {
         setMessages((prev) => [
           ...prev,
