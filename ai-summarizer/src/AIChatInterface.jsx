@@ -12,6 +12,15 @@ const AIChatInterface = () => {
   const [visible, setVisible] = useState(false);
   const messagesEndRef = useRef(null);
 
+  // 1️⃣ Load saved model on mount
+  useEffect(() => {
+    chrome.storage.local.get('model', ({ model }) => {
+      if (model && SUPPORTED_MODELS.includes(model)) {
+        setCurrentModel(model);
+      }
+    });
+  }, []);
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -119,6 +128,21 @@ const AIChatInterface = () => {
     return () => chrome.runtime.onMessage.removeListener(listener);
   }, [handleSummarizeMessage]);
 
+
+  // 3️⃣ React to model changes made elsewhere
+  useEffect(() => {
+    const onStorageChange = (changes, area) => {
+      if (area === 'local' && changes.model) {
+        const newModel = changes.model.newValue;
+        if (SUPPORTED_MODELS.includes(newModel)) {
+          setCurrentModel(newModel);
+        }
+      }
+    };
+    chrome.storage.onChanged.addListener(onStorageChange);
+    return () => chrome.storage.onChanged.removeListener(onStorageChange);
+  }, []);
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -139,8 +163,8 @@ const AIChatInterface = () => {
         >
           {currentModel}
         </button>
-        <button 
-          onClick={() => setVisible(false)} 
+        <button
+          onClick={() => setVisible(false)}
           className="text-gray-400 hover:text-white text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-800 transition-colors"
         >
           ✕
@@ -151,10 +175,7 @@ const AIChatInterface = () => {
             {SUPPORTED_MODELS.map((model) => (
               <button
                 key={model}
-                onClick={() => {
-                  setCurrentModel(model);
-                  setShowModelSelect(false);
-                }}
+                onClick={() => { setCurrentModel(model); setShowModelSelect(false); chrome.storage.local.set({ model }); }}
                 className="block w-full text-left px-4 py-3 text-white hover:bg-neutral-800 transition-colors first:rounded-t-2xl last:rounded-b-2xl"
               >
                 {model}
@@ -169,11 +190,10 @@ const AIChatInterface = () => {
         {messages.map((message) => (
           <div key={message.id} className={`${message.type === 'user' ? 'flex justify-end' : ''}`}>
             <div
-              className={`${
-                message.type === 'user' 
-                  ? 'bg-neutral-900 text-white rounded-2xl px-4 py-3 max-w-[80%]' 
-                  : 'max-w-full'
-              }`}
+              className={`${message.type === 'user'
+                ? 'bg-neutral-900 text-white rounded-2xl px-4 py-3 max-w-[80%]'
+                : 'max-w-full'
+                }`}
             >
               <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
             </div>
@@ -213,9 +233,8 @@ const AIChatInterface = () => {
           <button
             onClick={handleChatMessage}
             disabled={!inputMessage.trim() || isTyping}
-            className={`${
-              inputMessage.trim() ? 'bg-white text-black' : 'bg-neutral-700 text-black'
-            } rounded-full hover:bg-neutral-600 disabled:bg-neutral-800 disabled:text-neutral-500 transition-all duration-200 flex items-center justify-center shrink-0`}
+            className={`${inputMessage.trim() ? 'bg-white text-black' : 'bg-neutral-700 text-black'
+              } rounded-full hover:bg-neutral-600 disabled:bg-neutral-800 disabled:text-neutral-500 transition-all duration-200 flex items-center justify-center shrink-0`}
             style={{ height: '40px', width: '40px' }}
           >
             <ArrowUp className="w-4 h-4" strokeWidth={2} />

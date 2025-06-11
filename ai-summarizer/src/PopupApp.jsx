@@ -93,6 +93,7 @@ export default function PopupApp() {
                   onClick={() => {
                     setModel(m);
                     setShowModelDropdown(false);
+                    chrome.storage.local.set({ model: m });
                   }}
                   className={`w-full text-left px-3 py-2 text-sm hover:bg-neutral-800 transition-colors ${
                     m === model ? 'text-white' : 'text-gray-400'
