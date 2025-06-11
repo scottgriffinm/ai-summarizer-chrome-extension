@@ -1,4 +1,3 @@
-// ai-summarizer/src/AIChatInterface.jsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowUp } from 'lucide-react';
 import { fetchChatCompletion } from './utils/openai.js';
@@ -19,7 +18,7 @@ const AIChatInterface = () => {
   }, [messages]);
 
   /**
-   * Summarize the entire page by calling OpenAI with a “please summarize this URL” prompt.
+   * Summarize the entire page by calling OpenAI with a "please summarize this URL" prompt.
    */
   const handleSummarizeMessage = useCallback(
     async (msg) => {
@@ -138,21 +137,24 @@ const AIChatInterface = () => {
   if (!visible) return null;
 
   return (
-    <div className="fixed top-1 right-1 w-[360px] max-h-[500px] max-w-[95vw] z-[9999] shadow-2xl rounded-2xl overflow-hidden bg-neutral-950 text-white flex flex-col">
+    <div className="fixed top-1 right-1 w-[400px] h-[600px] max-w-[95vw] max-h-[95vh] z-[9999] shadow-2xl rounded-3xl overflow-hidden bg-black text-white flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 relative flex justify-between items-center bg-black">
+      <div className="px-6 py-3 relative flex justify-between items-center">
         <button
           onClick={() => setShowModelSelect((s) => !s)}
-          className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+          className="text-lg font-medium text-gray-300 hover:text-white transition-colors"
         >
           {currentModel}
         </button>
-        <button onClick={() => setVisible(false)} className="text-gray-400 hover:text-white text-xl font-bold">
+        <button 
+          onClick={() => setVisible(false)} 
+          className="text-gray-400 hover:text-white text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-800 transition-colors"
+        >
           ✕
         </button>
 
         {showModelSelect && (
-          <div className="absolute top-12 left-4 bg-neutral-900 rounded-2xl shadow-lg z-10 py-2">
+          <div className="absolute top-12 left-6 bg-neutral-900 rounded-2xl shadow-lg z-10 py-2 min-w-[200px]">
             {SUPPORTED_MODELS.map((model) => (
               <button
                 key={model}
@@ -170,12 +172,15 @@ const AIChatInterface = () => {
       </div>
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 max-h-[300px]">
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
         {messages.map((message) => (
-          <div key={message.id} className={message.type === 'user' ? 'flex justify-end' : ''}>
+          <div key={message.id} className={`${message.type === 'user' ? 'flex justify-end' : ''}`}>
             <div
-              className={`${message.type === 'user' ? 'bg-neutral-900 text-white' : 'bg-white text-black'
-                } rounded-2xl px-4 py-3 max-w-[80%]`}
+              className={`${
+                message.type === 'user' 
+                  ? 'bg-neutral-900 text-white rounded-2xl px-4 py-3 max-w-[80%]' 
+                  : 'max-w-full'
+              }`}
             >
               <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
             </div>
@@ -194,15 +199,15 @@ const AIChatInterface = () => {
       </div>
 
       {/* User Input */}
-      <div className="bg-neutral-900 px-4 py-3">
+      <div className="bg-neutral-900 rounded-t-3xl px-4 py-3">
         <div className="flex items-center space-x-3">
           <div className="flex-1 relative">
             <textarea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder=""
-              className="w-full bg-neutral-900 rounded-2xl px-4 py-2 text-white placeholder-neutral-400 resize-none focus:outline-none transition-all duration-200 text-base leading-6 border border-neutral-700"
+              placeholder={`Reply to ${currentModel}`}
+              className="w-full bg-neutral-900 rounded-2xl px-4 py-2 text-white placeholder-neutral-400 resize-none focus:outline-none transition-all duration-200 text-base leading-6"
               rows="1"
               style={{ minHeight: '40px', maxHeight: '200px' }}
               onInput={(e) => {
@@ -215,8 +220,9 @@ const AIChatInterface = () => {
           <button
             onClick={handleChatMessage}
             disabled={!inputMessage.trim() || isTyping}
-            className={`${inputMessage.trim() ? 'bg-white text-black' : 'bg-neutral-700 text-black'
-              } rounded-full hover:bg-neutral-600 disabled:bg-neutral-800 disabled:text-neutral-500 transition-all duration-200 flex items-center justify-center shrink-0`}
+            className={`${
+              inputMessage.trim() ? 'bg-white text-black' : 'bg-neutral-700 text-black'
+            } rounded-full hover:bg-neutral-600 disabled:bg-neutral-800 disabled:text-neutral-500 transition-all duration-200 flex items-center justify-center shrink-0`}
             style={{ height: '40px', width: '40px' }}
           >
             <ArrowUp className="w-4 h-4" strokeWidth={2} />
