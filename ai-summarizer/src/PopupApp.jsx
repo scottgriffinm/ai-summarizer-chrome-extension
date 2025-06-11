@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SUPPORTED_MODELS, DEFAULT_MODEL } from './constants';
+import { SUPPORTED_MODELS, DEFAULT_MODEL, PAGE_SUMMARY_PROMPT} from './constants';
 
 export default function PopupApp() {
   const [apiKey, setApiKey] = useState('');
@@ -43,8 +43,7 @@ export default function PopupApp() {
 
     // Instruct content script to summarize page
     chrome.tabs.sendMessage(tab.id, {
-      type: 'summarize',
-      message: `Summarize the following web page:\n\n${tab.url}`
+      type: 'summarize'
     });
 
     // Close popup right away

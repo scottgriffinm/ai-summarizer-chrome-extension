@@ -22,8 +22,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   try {
     // Send to content script
     chrome.tabs.sendMessage(tab.id, {
-      type: 'summarize',
-      message: `Summarize the following text:\n\n${text}`
+      type: 'summarize'
     });
 
 
@@ -47,7 +46,7 @@ chrome.commands.onCommand.addListener(async (command) => {
       const tab = tabs[0];
       if (!tab?.id) return;
       // Ask the content script to figure out selection vs. page
-      chrome.tabs.sendMessage(tab.id, { type: 'shortcutSummarize' });
+      chrome.tabs.sendMessage(tab.id, { type: 'summarize' });
     });
   });
 });

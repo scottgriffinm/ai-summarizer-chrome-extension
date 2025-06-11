@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowUp } from 'lucide-react';
 import { fetchChatCompletion } from './utils/openai.js';
-import { SUPPORTED_MODELS, DEFAULT_MODEL } from './constants.js';
+import { SUPPORTED_MODELS, DEFAULT_MODEL, SELECTION_SUMMARY_PROMPT, PAGE_SUMMARY_PROMPT } from './constants.js';
 
 const AIChatInterface = () => {
   const [messages, setMessages] = useState([]);
@@ -97,22 +97,15 @@ const AIChatInterface = () => {
   useEffect(() => {
     const listener = (msg) => {
       if (msg.type === 'summarize') {
-        // From popup → Summarize a URL or pre‐crafted prompt
-        handleSummarizeMessage(msg.message);
-        setVisible(true);
-
-      } else if (msg.type === 'shortcutSummarize') {
-        // User pressed ⌘+⇧+S or Ctrl+⇧+S
         // First, see if there is any selected text on the page:
         const selection = window.getSelection()?.toString()?.trim();
         if (selection) {
-          handleSummarizeMessage(`Summarize the following text:\n\n${selection}`);
+          handleSummarizeMessage(`${SELECTION_SUMMARY_PROMPT}${selection}`);
         } else {
           // No selection → summarize the whole page
-          handleSummarizeMessage(`Summarize the following web page:\n\n${window.location.href}`);
+          handleSummarizeMessage(`${PAGE_SUMMARY_PROMPT}${window.location.href}`);
         }
         setVisible(true);
-
       } else if (msg.type === 'error') {
         setMessages((prev) => [
           ...prev,
