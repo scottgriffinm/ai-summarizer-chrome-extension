@@ -25,6 +25,7 @@ const AIChatInterface = () => {
     async (msg) => {
       setVisible(true);
       setMessages([]); // Clear previous chat
+      setIsTyping(true);
 
       try {
         const { apiKey, model: storedModel } = await new Promise((resolve) =>
@@ -46,6 +47,8 @@ const AIChatInterface = () => {
         setMessages([{ id: Date.now(), type: 'ai', content: aiContent }]);
       } catch (err) {
         setMessages([{ id: Date.now(), type: 'ai', content: `Error: ${err.message}` }]);
+      } finally {
+        setIsTyping(false);
       }
     },
     [currentModel]
@@ -135,7 +138,7 @@ const AIChatInterface = () => {
   if (!visible) return null;
 
   return (
-    <div className="fixed top-4 right-4 w-[360px] max-h-[500px] max-w-[95vw] z-[9999] shadow-2xl rounded-2xl overflow-hidden bg-neutral-950 text-white flex flex-col">
+    <div className="fixed top-1 right-1 w-[360px] max-h-[500px] max-w-[95vw] z-[9999] shadow-2xl rounded-2xl overflow-hidden bg-neutral-950 text-white flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 relative flex justify-between items-center bg-black">
         <button
